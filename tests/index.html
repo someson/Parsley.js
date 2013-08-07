@@ -249,6 +249,7 @@
 
             <input type="text" id="luhn" data-luhn="true" />
             <input type="text" id="americanDate" data-americandate="true" />
+            <input type="text" id="europeanDate" data-europeandate="true" />
             <input type="text" id="es_dni" data-es_dni="true" />
             <input type="text" id="es_cif" data-es_cif="true" />
             <input type="text" id="es_postalcode" data-es_postalcode="true" />
@@ -267,6 +268,7 @@
 
         switch ( location.hash ) {
             case '#jquery':
+            console.log('#jquery');
                 jsAppend( jquery , pause( 100 ) );
                 jsAppend( '../parsley.js' , pause( 50 ) );
                 jsAppend( '../parsley.extend.js' , pause( 50 ) );

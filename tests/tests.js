@@ -1144,6 +1144,25 @@ var testSuite = function () {
     	 triggerSubmitValidation( '#americanDate', '2.8.12' );
     	 expect( $( '#americanDate' ).hasClass( 'parsley-success' ) ).to.be( true );
        } )
+       it ( 'europeanDate', function () {
+    	 triggerSubmitValidation( '#europeanDate', '02/28/2012' );
+    	 expect( $( '#europeanDate' ).hasClass( 'parsley-error' ) ).to.be( true );
+    	 expect( getErrorMessage( '#europeanDate', 'europeanDate') ).to.be( 'This value should be a valid date (DD/MM/YYYY).' );
+    	 triggerSubmitValidation( '#europeanDate', '02/08/2012' );
+    	 expect( $( '#europeanDate' ).hasClass( 'parsley-success' ) ).to.be( true );
+    	 triggerSubmitValidation( '#europeanDate', '10/08/2012' );
+    	 expect( $( '#europeanDate' ).hasClass( 'parsley-success' ) ).to.be( true );
+    	 triggerSubmitValidation( '#europeanDate', '2/8/12' );
+    	 expect( $( '#europeanDate' ).hasClass( 'parsley-success' ) ).to.be( true );
+    	 triggerSubmitValidation( '#europeanDate', '02-08-2012' );
+    	 expect( $( '#europeanDate' ).hasClass( 'parsley-success' ) ).to.be( true );
+    	 triggerSubmitValidation( '#europeanDate', '2-8-12' );
+    	 expect( $( '#europeanDate' ).hasClass( 'parsley-success' ) ).to.be( true );
+    	 triggerSubmitValidation( '#europeanDate', '02.08.2012' );
+    	 expect( $( '#europeanDate' ).hasClass( 'parsley-success' ) ).to.be( true );
+    	 triggerSubmitValidation( '#europeanDate', '2.8.12' );
+    	 expect( $( '#europeanDate' ).hasClass( 'parsley-success' ) ).to.be( true );
+       } )
      } )
      describe ( 'Test Parsley l10n es', function () {
        it ( 'es_dni', function () {

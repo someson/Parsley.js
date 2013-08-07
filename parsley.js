@@ -351,7 +351,7 @@
       // overriden by ParsleyItemMultiple if radio or checkbox input
       if ( 'undefined' === typeof this.isRadioOrCheckbox ) {
         this.isRadioOrCheckbox = false;
-        this.hash = this.generateHash();
+        this.hash = this.type === 'parsleyFieldGrouped' ? 'parsley-' + this.$element.data().grouped : this.generateHash();
         this.errorClassHandler = this.options.errors.classHandler( element, this.isRadioOrCheckbox ) || this.$element;
       }
 
@@ -805,15 +805,15 @@
     * @param {String} constraintName Method Name
     */
     , removeError: function ( constraintName ) {
-      var liError = this.ulError + ' .' + constraintName
-        , that = this;
+      var that = this
+        , grouped = that.type === 'parsleyFieldGrouped' ? "[rel='" + that.$element.attr( 'name' ) + "']" : ''
+        , liError = this.ulError + ' .' + constraintName + grouped;
 
-      this.options.animate ? $( liError ).fadeOut( this.options.animateDuration, function () {
-        $( this ).remove();
-
-        if ( that.ulError && $( that.ulError ).children().length === 0 ) {
-          that.removeErrors();
-        } } ) : $( liError ).remove();
+      this.options.animate ?
+        $( liError ).fadeOut( this.options.animateDuration, function () {
+          $( this ).remove();
+          if ( that.ulError && $( that.ulError ).children().length === 0 ) that.removeErrors();
+        }) : $( liError ).remove();
     }
 
     /**
@@ -824,9 +824,11 @@
     */
     , addError: function ( error ) {
       for ( var constraint in error ) {
-        var liTemplate = $( this.options.errors.errorElem ).addClass( constraint );
+        var liTemplate = $( this.options.errors.errorElem ).addClass( constraint )
+          , html = $( liTemplate ).html( error[ constraint ] );
 
-        $( this.ulError ).append( this.options.animate ? $( liTemplate ).html( error[ constraint ] ).hide().fadeIn( this.options.animateDuration ) : $( liTemplate ).html( error[ constraint ] ) );
+        if ( this.type === 'parsleyFieldGrouped' ) liTemplate.attr( 'rel', this.$element.attr( 'name' ) );
+        $( this.ulError ).append( this.options.animate ? html.hide().fadeIn( this.options.animateDuration ) : html );
       }
     }
 
@@ -836,7 +838,11 @@
     * @method removeErrors
     */
     , removeErrors: function () {
-      this.options.animate ? $( this.ulError ).fadeOut( this.options.animateDuration, function () { $( this ).remove(); } ) : $( this.ulError ).remove();
+      if ( this.type !== 'parsleyFieldGrouped' || $( this.ulError ).children().length === 0 ) {
+        this.options.animate ?
+          $( this.ulError ).fadeOut( this.options.animateDuration, function() { $(this).remove(); } ) :
+          $( this.ulError ).remove();
+      }
     }
 
     /**
@@ -886,8 +892,9 @@
             this.Validator.messages[ constraintName ][ constraint.requirements ] : ( 'undefined' === typeof this.Validator.messages[ constraintName ] ?
               this.Validator.messages.defaultMessage : this.Validator.formatMesssage( this.Validator.messages[ constraintName ], constraint.requirements ) ) );
 
+      var grouped = this.type === 'parsleyFieldGrouped' ? "[rel='" + this.$element.attr('name') + "']" : '';
       // add liError if not shown. Do not add more than once custom errorMessage if exist
-      if ( !$( this.ulError + ' .' + liClass ).length ) {
+      if ( !$( this.ulError + ' .' + liClass + grouped ).length ) {
         liError[ liClass ] = message;
         this.addError( liError );
       }
@@ -1250,6 +1257,9 @@
           case 'parsleyField':
             parsleyInstance = new ParsleyField( self, options, 'parsleyField' );
             break;
+          case 'parsleyFieldGrouped':
+            parsleyInstance = new ParsleyField(self, options, 'parsleyFieldGrouped');
+            break;
           case 'parsleyFieldMultiple':
             parsleyInstance = new ParsleyFieldMultiple( self, options, 'parsleyFieldMultiple' );
             break;
@@ -1277,7 +1287,10 @@
     // if it is a Parsley supported single element, bind it too, except inputs type hidden
     // add here a return instance, cuz' we could call public methods on single elems with data[ option ]() above
     } else if ( $( this ).is( options.inputs ) && !$( this ).is( options.excluded ) ) {
-      newInstance = bind( $( this ), !$( this ).is( 'input[type=radio], input[type=checkbox]' ) ? 'parsleyField' : 'parsleyFieldMultiple' );
+      var t = 'parsleyField';
+      if ( this.data().grouped ) t = 'parsleyFieldGrouped';
+      else if ( $( this ).is( 'input[type=radio], input[type=checkbox]' ) ) t = 'parsleyFieldMultiple';
+      newInstance = bind( $( this ), t );
     }
 
     return 'function' === typeof fn ? fn() : newInstance;
@@ -1294,7 +1307,7 @@
   $.fn.parsley.defaults = {
     // basic data-api overridable properties here..
     inputs: 'input, textarea, select'           // Default supported inputs.
-    , excluded: 'input[type=hidden], input[type=file], :disabled' // Do not validate input[type=hidden] & :disabled.
+    , excluded: 'input[type=hidden]:not(".validatable"), input[type=file], :disabled' // Do not validate
     , trigger: false                            // $.Event() that will trigger validation. eg: keyup, change..
     , animate: true                             // fade in / fade out error messages
     , animateDuration: 300                      // fadein/fadout ms time
@@ -1308,12 +1321,12 @@
     , messages: {}                              // Add your own error messages here
 
     //some quite advanced configuration here..
-    , validateIfUnchanged: false                                          // false: validate once by field value change
+    , validateIfUnchanged: false                                 // false: validate once by field value change
     , errors: {
-        classHandler: function ( elem, isRadioOrCheckbox ) {}             // specify where parsley error-success classes are set
-      , container: function ( elem, isRadioOrCheckbox ) {}                // specify an elem where errors will be **apened**
-      , errorsWrapper: '<ul></ul>'                                        // do not set an id for this elem, it would have an auto-generated id
-      , errorElem: '<li></li>'                                            // each field constraint fail in an li
+        classHandler: function ( elem, isRadioOrCheckbox ) {}    // specify where parsley error-success classes are set
+      , container: function ( elem, isRadioOrCheckbox ) {}       // specify an elem where errors will be **apened**
+      , errorsWrapper: '<ul></ul>'                               // do not set an id for this elem, it would have an auto-generated id
+      , errorElem: '<li></li>'                                   // each field constraint fail in an li
       }
     , listeners: {
         onFieldValidate: function ( elem, ParsleyForm ) { return false; } // Executed on validation. Return true to ignore field validation
